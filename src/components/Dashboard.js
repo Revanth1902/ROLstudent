@@ -1287,34 +1287,39 @@ const Dashboard = () => {
             </Modal>
 
             <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h5">Semester Dates</Typography>
-                  <TextField
-                    label="Semester Start Date"
-                    type="date"
-                    value={semesterStartDate}
-                    onChange={(e) => setSemesterStartDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    style={{ marginRight: 10 }}
-                  />
-                  <TextField
-                    label="Semester End Date"
-                    type="date"
-                    value={semesterEndDate}
-                    onChange={(e) => setSemesterEndDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSemesterDatesChange}
-                  >
-                    Save
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
+      <StyledCard>
+        <CardContent>
+          <>
+            <Typography variant="h5">Semester Dates</Typography>
+            <TextField
+              label="Semester Start Date"
+              type="date"
+              value={semesterStartDate}
+              onChange={(e) => setSemesterStartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              sx={{ mb: 2 }} // Margin bottom
+            />
+            <TextField
+              label="Semester End Date"
+              type="date"
+              value={semesterEndDate}
+              onChange={(e) => setSemesterEndDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              sx={{ mb: 2 }} // Margin bottom
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSemesterDatesChange}
+            >
+              Save
+            </Button>
+          </>
+        </CardContent>
+      </StyledCard>
+    </Grid>
           </Grid>
           <Button
             variant="contained"
