@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 const firebaseConfig = {
   apiKey: "AIzaSyCz96JUwLxg6sBIvtELTNcNyo1wRZgMZao",
-  authDomain: "rol-chats.firebaseapp.com",
+  authDomain: "https://rol-student.vercel.app/",
   projectId: "rol-chats",
   storageBucket: "rol-chats.appspot.com",
   messagingSenderId: "731014435716",

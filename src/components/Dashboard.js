@@ -141,20 +141,12 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   backgroundColor: "#ffffff",
 }));
 
-const ScrollableLogContainer = styled(Box)(({ theme }) => ({
-  overflowX: "auto",
-  whiteSpace: "nowrap",
-  "&::-webkit-scrollbar": {
-    height: "8px",
-  },
-  "&::-webkit-scrollbar-thumb": {
-    backgroundColor: theme.palette.primary.main,
-    borderRadius: "4px",
-  },
-  "&::-webkit-scrollbar-track": {
-    backgroundColor: theme.palette.grey[200],
-  },
+const ScrollableLogContainer = styled("div")(({ theme }) => ({
+  maxHeight: "200px", // Adjust the height as needed
+  overflowY: "auto",
+  paddingRight: theme.spacing(1), // To avoid overlap with scrollbar
 }));
+
 const StyledList = styled(List)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
@@ -439,6 +431,14 @@ const Dashboard = () => {
   };
 
   const handleAttendanceChange = () => {
+    if (!selectedDate) {
+      setSnackbarMessage("Please select a valid date.");
+      setSnackbarOpen(true);
+      return;
+    }
+    console.log("Selected Date:", selectedDate);
+    console.log("Attendance Status:", attendanceStatus);
+
     fetch(`${API_URL}/attendance`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -520,7 +520,7 @@ const Dashboard = () => {
           attendance.filter((a) => a.status === "leave").length,
           logs.filter((a) => a.status === "holiday").length,
         ],
-        backgroundColor: ["#4caf50", "#f44336", "#ffeb3b"],
+        backgroundColor: ["#ad6989", "#ee9777", "#82c4c3"],
       },
     ],
   };
@@ -816,7 +816,8 @@ const Dashboard = () => {
                 sx={{
                   boxShadow: 3,
                   borderRadius: 4,
-                  backgroundColor: "#c0c0c0", // Soft, premium background color
+                  backgroundColor: "#f8b195",
+                  color: "#c1432e", // Soft, premium background color
                 }}
               >
                 <CardContent
@@ -885,15 +886,28 @@ const Dashboard = () => {
 
             <Grid item xs={12} md={6}>
               <StyledCard>
-                <CardContent sx={{ backgroundColor: "#798dc5" }}>
-                  <Typography variant="h6" gutterBottom>
-                    Attendance Overview
-                  </Typography>
-                  <Pie data={attendanceData} />
+                <CardContent
+                  sx={{
+                    backgroundColor: "#8bf0ba",
+                    color: "",
+                    fontFamily: "Poppins",
+                  }}
+                >
                   <Typography
                     variant="h6"
                     gutterBottom
-                    style={{ marginTop: 20 }}
+                    sx={{ fontFamily: "Poppins" }}
+                  >
+                    Attendance Overview
+                  </Typography>
+                  <div style={{width:"100%" , height:"330px", alignItems:"center", justifyContent:"center" , display:"flex"}}>
+                    <Pie data={attendanceData} />
+                  </div>
+
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    style={{ marginTop: 20, fontFamily: "Poppins" }}
                   >
                     Attendance Logs
                   </Typography>
@@ -901,12 +915,18 @@ const Dashboard = () => {
                     <StyledPaper sx={{ backgroundColor: "#fdfdff" }}>
                       {logs.length > 0 ? (
                         logs.map((log, index) => (
-                          <LogEntry key={index} type={log.status}>
+                          <LogEntry
+                            key={index}
+                            type={log.status}
+                            sx={{ fontFamily: "Poppins" }}
+                          >
                             {log.date}: {log.status}
                           </LogEntry>
                         ))
                       ) : (
-                        <Typography>No logs available.</Typography>
+                        <Typography sx={{ fontFamily: "Poppins" }}>
+                          No logs available.
+                        </Typography>
                       )}
                     </StyledPaper>
                   </ScrollableLogContainer>
@@ -916,9 +936,9 @@ const Dashboard = () => {
             <Grid item xs={12}>
               <Card
                 sx={{
-                  backgroundColor: "#2e2b63",
+                  backgroundColor: "#e6dbc9",
                   boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                  color: "whitesmoke",
+                  color: "#c53211",
                 }}
               >
                 <CardContent>
