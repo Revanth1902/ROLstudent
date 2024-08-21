@@ -216,7 +216,7 @@ const Dashboard = () => {
 
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [logs, setLogs] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());g
   const [attendanceStatus, setAttendanceStatus] = useState("present");
   const [holidayName, setHolidayName] = useState("");
   const [userAvatar, setUserAvatar] = useState(
@@ -234,6 +234,10 @@ const Dashboard = () => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [smallmessage, setSmallmessage] = useState("");
+  const [notificationPermission, setNotificationPermission] = useState(
+    Notification.permission
+  );
+
   const [newGoal, setNewGoal] = useState({
     goalName: "",
     goalEndDate: "",
@@ -286,6 +290,44 @@ const Dashboard = () => {
     color:
       type === "leave" ? "#f44336" : type === "holiday" ? "#b08df1" : "#000000",
   }));
+
+  useEffect(() => {
+    // Request notification permission on component mount
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((permission) => {
+        setNotificationPermission(permission);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (notificationPermission === "granted") {
+      const notifyUser = () => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+
+        // Notify at 6 AM, 8 AM, and 5 PM
+        if (
+          (hours === 6 && minutes === 0 && seconds === 0) ||
+          (hours === 8 && minutes === 0 && seconds === 0) ||
+          (hours === 17 && minutes === 0 && seconds === 0)
+        ) {
+          new Notification("Reminder", {
+            body: "Don't forget to mark today's attendance!",
+            icon: "/rol.png", // Replace with your own icon
+          });
+        }
+      };
+
+      // Check every second
+      const intervalId = setInterval(notifyUser, 1000);
+
+      // Clear interval on component unmount
+      return () => clearInterval(intervalId);
+    }
+  }, [notificationPermission]);
 
   useEffect(() => {
     handleFetch();
