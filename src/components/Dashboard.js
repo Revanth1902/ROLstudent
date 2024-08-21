@@ -233,7 +233,7 @@ const Dashboard = () => {
   const [newTaskName, setNewTaskName] = useState("");
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [smallmessage, setSmallmessage] = useState("");
   const [newGoal, setNewGoal] = useState({
     goalName: "",
     goalEndDate: "",
@@ -288,6 +288,10 @@ const Dashboard = () => {
   }));
 
   useEffect(() => {
+    handleFetch();
+  }, [user.uid]);
+
+  const handleFetch = () => {
     fetch(`${API_URL}/user/${user.uid}`)
       .then((response) => response.json())
       .then((data) => {
@@ -300,7 +304,7 @@ const Dashboard = () => {
         setLoading(false); // Fetch timetable data
       })
       .catch((error) => console.error("Fetch error:", error));
-  }, [user.uid]);
+  };
 
   useEffect(() => {
     if (semesterStartDate && semesterEndDate) {
@@ -331,12 +335,31 @@ const Dashboard = () => {
       const endDate = new Date(semesterEndDate);
       const currentDate = new Date();
 
-      const completedDays = Math.floor(
-        (currentDate - startDate) / (1000 * 60 * 60 * 24)
-      );
-      const remainingDays = Math.floor(
-        (endDate - currentDate) / (1000 * 60 * 60 * 24)
-      );
+      // Calculate completed days only if the current date is after the start date
+      const completedDays =
+        currentDate >= startDate
+          ? Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24))
+          : 0;
+
+      // Calculate remaining days only if the current date is before the end date
+      const remainingDays =
+        currentDate <= endDate
+          ? Math.floor((endDate - currentDate) / (1000 * 60 * 60 * 24))
+          : 0;
+      let smallMessage = "";
+      // Handle edge cases
+      if (currentDate < startDate) {
+        smallMessage = "The semester has not started yet.";
+      } else if (currentDate > endDate) {
+        smallMessage = "The semester has already ended.";
+      } else {
+        smallMessage = "The semester is in progress.";
+      }
+
+      // Set the message to display
+      setSmallmessage(smallMessage);
+
+      console.log({ completedDays, remainingDays });
 
       const totalDays =
         Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
@@ -368,6 +391,7 @@ const Dashboard = () => {
       .then((response) => response.json())
       .then((data) => {
         setTasks(data.tasks);
+        handleFetch();
         setNewTaskName("");
         setOpenTaskModal(false);
       })
@@ -386,6 +410,7 @@ const Dashboard = () => {
     })
       .then((response) => response.json())
       .then((data) => console.log("Semester dates updated:", data));
+    handleFetch();
   };
   const handleAddGoal = () => {
     fetch(`${API_URL}/goal`, {
@@ -398,6 +423,7 @@ const Dashboard = () => {
         setGoals(data.goals);
         setNewGoal({ goalName: "", goalEndDate: "", goalDescription: "" });
         setOpenGoalModal(false);
+        handleFetch();
       })
       .catch((error) => console.error("Error adding goal:", error));
   };
@@ -429,15 +455,12 @@ const Dashboard = () => {
 
     return Math.min(100, percentage).toFixed(1); // Ensure the percentage does not exceed 100%
   };
-
   const handleAttendanceChange = () => {
     if (!selectedDate) {
       setSnackbarMessage("Please select a valid date.");
       setSnackbarOpen(true);
       return;
     }
-    console.log("Selected Date:", selectedDate);
-    console.log("Attendance Status:", attendanceStatus);
 
     fetch(`${API_URL}/attendance`, {
       method: "POST",
@@ -452,13 +475,17 @@ const Dashboard = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data.message) {
-          // If the backend returns a message (e.g., for duplicates)
           setSnackbarMessage(data.message);
           setSnackbarOpen(true);
+          handleFetch();
         } else {
-          // Otherwise, assume success and update attendance
-          setAttendance((prev) => [...prev, data]);
+          setSnackbarMessage("Attendance saved successfully");
+          setSnackbarOpen(true);
           setHolidayName("");
+          handleFetch();
+          // Optionally, clear the selection and status after successful save
+          setSelectedDate(new Date());
+          setAttendanceStatus("");
         }
       })
       .catch((error) => {
@@ -474,6 +501,7 @@ const Dashboard = () => {
       .then(() => {
         setSemesterStartDate("");
         setSemesterEndDate("");
+        handleFetch();
         setAttendance([]);
         setLogs([]);
       });
@@ -583,7 +611,10 @@ const Dashboard = () => {
       }),
     })
       .then((response) => response.json())
-      .then(() => handleCloseModal())
+      .then(() => {
+        handleCloseModal();
+        handleFetch();
+      })
       .catch((error) => console.error("Error saving timetable entry:", error));
   };
   useEffect(() => {
@@ -607,7 +638,8 @@ const Dashboard = () => {
       .then(() => {
         setTasks(tasks.filter((task) => task._id !== taskId));
         setCelebrationOpen(true);
-        setTimeout(() => setCelebrationOpen(false), 3000); // Close the modal after 3 seconds
+        setTimeout(() => setCelebrationOpen(false), 3000);
+        handleFetch(); // Close the modal after 3 seconds
       })
       .catch((error) => console.error("Error deleting task:", error));
   };
@@ -760,6 +792,16 @@ const Dashboard = () => {
                   >
                     Semester: {formattedStartDate} to {formattedEndDate}
                   </Typography>
+                  {smallmessage && (
+                    <Typography
+                      variant="p"
+                      component="div"
+                      sx={{ fontFamily: "Poppins", fontWeight: "bold" }}
+                    >
+                      {smallmessage}
+                    </Typography>
+                  )}
+
                   <Box
                     display="flex"
                     alignItems="center"
@@ -817,14 +859,10 @@ const Dashboard = () => {
                   boxShadow: 3,
                   borderRadius: 4,
                   backgroundColor: "#f8b195",
-                  color: "#c1432e", // Soft, premium background color
+                  color: "#c1432e",
                 }}
               >
-                <CardContent
-                  sx={{
-                    padding: "24px",
-                  }}
-                >
+                <CardContent sx={{ padding: "24px" }}>
                   <Typography
                     sx={{ fontFamily: "Poppins" }}
                     variant="h6"
@@ -837,7 +875,10 @@ const Dashboard = () => {
                     <Calendar
                       onChange={setSelectedDate}
                       value={selectedDate}
-                      tileClassName={tileClassName}
+                      tileClassName={({ date, view }) => {
+                        // Add custom class names based on date status
+                        // You can customize this to show present, leave, and holiday styles
+                      }}
                     />
                   </Box>
                   <Typography
@@ -882,6 +923,12 @@ const Dashboard = () => {
                   </Button>
                 </CardContent>
               </Card>
+              <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={() => setSnackbarOpen(false)}
+                message={snackbarMessage}
+              />
             </Grid>
 
             <Grid item xs={12} md={6}>
@@ -900,7 +947,15 @@ const Dashboard = () => {
                   >
                     Attendance Overview
                   </Typography>
-                  <div style={{width:"100%" , height:"330px", alignItems:"center", justifyContent:"center" , display:"flex"}}>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "330px",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      display: "flex",
+                    }}
+                  >
                     <Pie data={attendanceData} />
                   </div>
 
@@ -1287,39 +1342,39 @@ const Dashboard = () => {
             </Modal>
 
             <Grid item xs={12}>
-      <StyledCard>
-        <CardContent>
-          <>
-            <Typography variant="h5">Semester Dates</Typography>
-            <TextField
-              label="Semester Start Date"
-              type="date"
-              value={semesterStartDate}
-              onChange={(e) => setSemesterStartDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              sx={{ mb: 2 }} // Margin bottom
-            />
-            <TextField
-              label="Semester End Date"
-              type="date"
-              value={semesterEndDate}
-              onChange={(e) => setSemesterEndDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              sx={{ mb: 2 }} // Margin bottom
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSemesterDatesChange}
-            >
-              Save
-            </Button>
-          </>
-        </CardContent>
-      </StyledCard>
-    </Grid>
+              <StyledCard>
+                <CardContent>
+                  <>
+                    <Typography variant="h5">Semester Dates</Typography>
+                    <TextField
+                      label="Semester Start Date"
+                      type="date"
+                      value={semesterStartDate}
+                      onChange={(e) => setSemesterStartDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      sx={{ mb: 2 }} // Margin bottom
+                    />
+                    <TextField
+                      label="Semester End Date"
+                      type="date"
+                      value={semesterEndDate}
+                      onChange={(e) => setSemesterEndDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      sx={{ mb: 2 }} // Margin bottom
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSemesterDatesChange}
+                    >
+                      Save
+                    </Button>
+                  </>
+                </CardContent>
+              </StyledCard>
+            </Grid>
           </Grid>
           <Button
             variant="contained"
