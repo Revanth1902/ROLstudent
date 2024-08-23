@@ -34,6 +34,7 @@ import {
   Paper as TablePaper,
   BottomNavigation,
   BottomNavigationAction,
+  CardMedia,
 } from "@mui/material";
 import { SvgIcon } from "@mui/material";
 import Calendar from "react-calendar";
@@ -598,9 +599,13 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
+        // const response = await fetch(
+        //   "https://newsapi.org/v2/top-headlines?country=in&apiKey=5338634f16774d0f943f47d4566646d5"
+        // );
         const response = await fetch(
-          "https://newsapi.org/v2/top-headlines?country=in&apiKey=5338634f16774d0f943f47d4566646d5"
+          "https://gnews.io/api/v4/top-headlines?category=general&apikey=4c0766a8192d4ec36be2f41d1cf930c5"
         );
+
         const data = await response.json();
         setArticles(data.articles);
       } catch (error) {
@@ -1619,41 +1624,27 @@ const Dashboard = () => {
               </Typography>
               <Stack spacing={3}>
                 {articles.slice(0, visibleArticles).map((article, index) => (
-                  <Card
-                    key={index}
-                    variant="outlined"
-                    sx={{
-                      cursor: "pointer",
-                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-                      transition: "transform 0.3s ease-in-out",
-                      "&:hover": {
-                        transform: "translateY(-5px)",
-                        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.2)",
-                      },
-                    }}
-                    onClick={() => handleClick(article.url)}
-                  >
-                    <CardContent>
-                      <Typography
-                        variant="h6"
-                        component="h2"
-                        gutterBottom
-                        sx={{ fontWeight: 600, fontFamily: "Poppins" }}
-                      >
-                        {article.title}
-                      </Typography>
-                      {article.author && (
-                        <Typography
-                          variant="subtitle2"
-                          color="textSecondary"
-                          sx={{ fontStyle: "italic", fontFamily: "Poppins" }}
-                        >
-                          {article.author} -{" "}
-                          {new Date(article.publishedAt).toLocaleDateString()}
-                        </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <>
+                
+
+                    <div
+                      class="cardnews"
+                      onClick={() => handleClick(article.url)}
+                    >
+                      <div class="image">
+                        <img src={article.image} alt=""/>
+                      </div>
+                      <div class="card__infonews">
+                        <span class="page">{article.source.name}</span>
+                        <a href="#" class="titlenews">
+                         {article.title}
+                        </a>
+                        <p class="content">
+                         {article.description}
+                        </p>
+                      </div>
+                    </div>
+                  </>
                 ))}
               </Stack>
               {visibleArticles < articles.length && (
@@ -1799,7 +1790,7 @@ const Dashboard = () => {
                 </div>
               </div>
             </Grid>
-            <Grid>
+            {/* <Grid>
               <Paper style={{ padding: "20px", marginTop: "20px" }}>
                 <Typography variant="h4" component="h1" gutterBottom>
                   Chat with GPT
@@ -1832,7 +1823,7 @@ const Dashboard = () => {
                   </Typography>
                 </Box>
               </Paper>
-            </Grid>
+            </Grid> */}
           </Container>
         );
       case 3:
