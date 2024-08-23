@@ -441,7 +441,6 @@ const Dashboard = () => {
     setLoading(true);
 
     try {
-     
       const res = await fetch(
         "https://api.openai.com/v1/engines/text-curie-001/completions",
         {
