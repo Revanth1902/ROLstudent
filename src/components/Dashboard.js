@@ -439,15 +439,15 @@ const Dashboard = () => {
   });
   const handleSubmit = async () => {
     setLoading(true);
-    const apikey =
-      "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";
+
     try {
+     
       const res = await fetch(
         "https://api.openai.com/v1/engines/text-curie-001/completions",
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${"api"}}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
