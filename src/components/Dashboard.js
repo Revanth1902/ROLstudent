@@ -7,14 +7,18 @@ import {
   IconButton,
   Avatar,
   Container,
+  DialogTitle,
   Grid,
   Card,
+  CardHeader,
   CardContent,
   TextField,
   Button,
   CircularProgress,
   Paper,
   Divider,
+  Dialog,
+  DialogContent,
   FormControl,
   InputLabel,
   Select,
@@ -38,6 +42,7 @@ import {
 } from "@mui/material";
 import { SvgIcon } from "@mui/material";
 import Calendar from "react-calendar";
+import bibleData from "./bible.json";
 import { Pie } from "react-chartjs-2";
 import "react-calendar/dist/Calendar.css";
 import Cookies from "js-cookie";
@@ -52,6 +57,7 @@ import Confetti from "react-confetti";
 import { Cloud, WbSunny, AcUnit, LocalMall } from "@mui/icons-material";
 import { Alert } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import HomeIcon from "@mui/icons-material/Home";
 import ArticleIcon from "@mui/icons-material/Article";
 import SchoolIcon from "@mui/icons-material/School";
@@ -257,7 +263,6 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [userInput, setUserInput] = useState("");
   const [response, setResponse] = useState("");
-
   const [attendanceStatus, setAttendanceStatus] = useState("present");
   const [holidayName, setHolidayName] = useState("");
   const [userAvatar, setUserAvatar] = useState(
@@ -279,6 +284,54 @@ const Dashboard = () => {
   const [notificationPermission, setNotificationPermission] = useState(
     Notification.permission
   );
+  const holyBooks = [
+    {
+      name: "Bhagavad Gita",
+      id: "bhagavadgita",
+      image:
+        "https://www.devvratyoga.com/wp-content/uploads/2022/09/Bhagvad-Gita.png",
+    },
+    {
+      name: "Bible",
+      id: "bible",
+      image:
+        "https://assets.editorial.aetnd.com/uploads/2018/01/discovery-shows-early-christians-didnt-always-take-the-bible-literallys-featured-photo.jpg",
+    },
+    {
+      name: "Romeo and Juliet",
+      id: "romeo",
+      image: "https://i.ytimg.com/vi/sXJ_rD5bmtM/maxresdefault.jpg",
+    },
+  ];
+
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedChapter, setSelectedChapter] = useState(null);
+  const [bibleContent, setBibleContent] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [romeoHtmlContent, setRomeoHtmlContent] = useState("");
+  useEffect(() => {
+    const fetchHtmlContent = async () => {
+      const response = await fetch("/romeo.html");
+      const html = await response.text();
+      setRomeoHtmlContent(html);
+    };
+
+    fetchHtmlContent();
+  }, []);
+
+  const handleBookClick = (bookId) => {
+    setSelectedBook(bookId);
+    if (bookId === "bhagavadgita") {
+      fetchGita();
+    } else if (bookId === "bible") {
+      setBibleContent(bibleData.bible_story);
+      setIsModalOpen(true);
+    } else if (bookId === "romeo") {
+      setIsModalOpen(true);
+    }
+  };
+
+  // Fetch a specific chapter from the selected book
 
   const [newGoal, setNewGoal] = useState({
     goalName: "",
@@ -296,6 +349,7 @@ const Dashboard = () => {
   const [quote, setQuote] = useState([]);
   const [fact, setFact] = useState([]);
   const [uloading, setuLoading] = useState(true);
+  const [gita, setGita] = useState([]);
   useEffect(() => {
     const loadWords = async () => {
       setuLoading(true);
@@ -373,6 +427,28 @@ const Dashboard = () => {
     };
     fetchFact();
   }, []);
+  const fetchGita = async () => {
+    setLoading(true);
+    const url =
+      "https://bhagavad-gita3.p.rapidapi.com/v2/chapters/?skip=0&limit=18";
+    const options = {
+      method: "GET",
+      headers: {
+        "x-rapidapi-key": "fc8a180432msh55a4c15f88d8b54p1b81d6jsned3a148e414b",
+        "x-rapidapi-host": "bhagavad-gita3.p.rapidapi.com",
+      },
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const result = await response.json();
+      setLoading(false);
+      setIsModalOpen(true);
+      setGita(result);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const fetchRandomWord = async () => {
     try {
       const response = await fetch(
@@ -640,6 +716,7 @@ const Dashboard = () => {
         currentDate <= endDate
           ? Math.floor((endDate - currentDate) / (1000 * 60 * 60 * 24))
           : 0;
+
       let smallMessage = "";
       // Handle edge cases
       if (currentDate < startDate) {
@@ -669,13 +746,19 @@ const Dashboard = () => {
         ? (presentDays / totalWorkingDays) * 100
         : 0;
 
+      const completedPercentage = totalDays
+        ? (completedDays / totalDays) * 100
+        : 0;
+
       setProgress({
         completedDays,
         remainingDays,
         percentage: percentageAttendance,
+        completedPercentage: completedPercentage,
       });
     }
   }, [semesterStartDate, semesterEndDate, attendance]);
+
   const handleAddTask = () => {
     fetch(`${API_URL}/task`, {
       method: "POST",
@@ -939,37 +1022,39 @@ const Dashboard = () => {
         return (
           <>
             <Grid container spacing={3} style={{ marginTop: 0 }}>
-              <Grid item xs={12}>
-                <div class="cardweath">
-                  <div class="containerofwe">
-                    <div class="cloud front">
-                      <span class="left-front"></span>
-                      <span class="right-front"></span>
+              {current.condition.text && (
+                <Grid item xs={12}>
+                  <div class="cardweath">
+                    <div class="containerofwe">
+                      <div class="cloud front">
+                        <span class="left-front"></span>
+                        <span class="right-front"></span>
+                      </div>
+                      <span class="sun sunshine"></span>
+                      <span class="sun"></span>
+                      <div class="cloud back">
+                        <span class="left-back"></span>
+                        <span class="right-back"></span>
+                      </div>
                     </div>
-                    <span class="sun sunshine"></span>
-                    <span class="sun"></span>
-                    <div class="cloud back">
-                      <span class="left-back"></span>
-                      <span class="right-back"></span>
+
+                    <div class="card-header">
+                      <span>
+                        {location.name}
+                        <br />
+                        {current.condition.text}
+                      </span>
+                      <span>{location.localtime}</span>
+                    </div>
+
+                    <span class="temp">{current.temp_c}°</span>
+
+                    <div class="temp-scale">
+                      <span>Celcius</span>
                     </div>
                   </div>
-
-                  <div class="card-header">
-                    <span>
-                      {location.name}
-                      <br />
-                      {current.condition.text}
-                    </span>
-                    <span>{location.localtime}</span>
-                  </div>
-
-                  <span class="temp">{current.temp_c}°</span>
-
-                  <div class="temp-scale">
-                    <span>Celcius</span>
-                  </div>
-                </div>
-              </Grid>
+                </Grid>
+              )}
 
               <Grid item xs={12}>
                 <Card
@@ -993,26 +1078,61 @@ const Dashboard = () => {
                     </Typography>
                     {smallmessage && (
                       <Typography
-                        variant="p"
+                        variant="body1"
                         component="div"
-                        sx={{ fontFamily: "Poppins", fontWeight: "bold" }}
+                        sx={{
+                          fontFamily: "Poppins",
+                          fontWeight: "bold",
+                          marginTop: 1,
+                        }}
                       >
                         {smallmessage}
                       </Typography>
                     )}
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      marginTop={2}
+                      marginBottom={3}
+                    >
+                      <Typography
+                        sx={{ fontFamily: "Poppins" }}
+                        variant="body1"
+                        component="div"
+                      >
+                        Completed Days: {progress.completedDays}
+                      </Typography>
+                      <Typography
+                        sx={{ fontFamily: "Poppins" }}
+                        variant="body1"
+                        component="div"
+                      >
+                        Remaining Days: {progress.remainingDays}
+                      </Typography>
+                    </Box>
 
                     <Box
                       display="flex"
+                      flexDirection="row"
+                      justifyContent="space-between"
                       alignItems="center"
-                      justifyContent="center"
+                      spacing={2}
+                      flexWrap="wrap"
                     >
-                      <Box position="relative">
+                      {/* Overall Attendance Percentage */}
+                      <Box
+                        position="relative"
+                        // mr={3}
+                        // mb={2}
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                      >
                         <CircularProgress
                           variant="determinate"
                           value={progress.percentage}
                           size={100} // Adjust size as needed
                           sx={{ color: "#bc2af7" }}
-                          // Customize progress bar color
                         />
                         <Box
                           position="absolute"
@@ -1031,27 +1151,64 @@ const Dashboard = () => {
                             {formattedPercentage}%
                           </Typography>
                         </Box>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontFamily: "Poppins",
+                            fontWeight: "bold",
+                            marginTop: 1,
+                          }}
+                        >
+                          Overall Attendance
+                        </Typography>
                       </Box>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography
-                        sx={{ fontFamily: "Poppins" }}
-                        variant="body1"
-                        component="div"
+
+                      {/* Semester Progress */}
+                      <Box
+                        position="relative"
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
                       >
-                        Completed Days: {progress.completedDays}
-                      </Typography>
-                      <Typography
-                        sx={{ fontFamily: "Poppins" }}
-                        variant="body1"
-                        component="div"
-                      >
-                        Remaining Days: {progress.remainingDays}
-                      </Typography>
+                        <CircularProgress
+                          variant="determinate"
+                          value={progress.completedPercentage}
+                          size={100} // Adjust size as needed
+                          sx={{ color: "#f39c12" }}
+                        />
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left="50%"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          sx={{ transform: "translate(-50%, -50%)" }}
+                        >
+                          <Typography
+                            variant="h6"
+                            component="div"
+                            sx={{ fontFamily: "Poppins", fontWeight: "bold" }}
+                          >
+                            {Math.round(progress.completedPercentage)}%
+                          </Typography>
+                        </Box>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontFamily: "Poppins",
+                            fontWeight: "bold",
+                            marginTop: 1,
+                          }}
+                        >
+                          Semester Progress
+                        </Typography>
+                      </Box>
                     </Box>
                   </CardContent>
                 </Card>
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <Card
                   sx={{
@@ -1599,74 +1756,89 @@ const Dashboard = () => {
         );
       case 1:
         return (
-          <ThemeProvider theme={theme}>
-            <Grid
-              item
-              xs={12}
-              sx={{
-                padding: "20px",
-                backgroundColor: theme.palette.background.default,
-              }}
-            >
-              <Typography
-                variant="h4"
-                component="h1"
-                gutterBottom
-                sx={{
-                  fontWeight: 700,
-                  color: "#333",
-                  borderBottom: "2px solid #4caf50",
-                  paddingBottom: "10px",
-                  marginBottom: "20px",
-                }}
-              >
-                Latest News
-              </Typography>
-              <Stack spacing={3}>
-                {articles.slice(0, visibleArticles).map((article, index) => (
-                  <>
-                
-
-                    <div
-                      class="cardnews"
-                      onClick={() => handleClick(article.url)}
-                    >
-                      <div class="image">
-                        <img src={article.image} alt=""/>
-                      </div>
-                      <div class="card__infonews">
-                        <span class="page">{article.source.name}</span>
-                        <a href="#" class="titlenews">
-                         {article.title}
-                        </a>
-                        <p class="content">
-                         {article.description}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ))}
-              </Stack>
-              {visibleArticles < articles.length && (
-                <Button
-                  variant="contained"
-                  color="primary"
+          <>
+            {articles ? (
+              <ThemeProvider theme={theme}>
+                <Grid
+                  item
+                  xs={12}
                   sx={{
-                    marginTop: 4,
-                    borderRadius: "20px",
-                    padding: "10px 20px",
-                    fontWeight: 600,
-                    textTransform: "none",
-                    fontSize: "16px",
-                    fontFamily: "Poppins",
+                    padding: "20px",
+                    backgroundColor: theme.palette.background.default,
                   }}
-                  onClick={handleLoadMore}
                 >
-                  Load More
-                </Button>
-              )}
-            </Grid>
-          </ThemeProvider>
+                  <Typography
+                    variant="h4"
+                    component="h1"
+                    gutterBottom
+                    sx={{
+                      fontWeight: 700,
+                      color: "#333",
+                      borderBottom: "2px solid #4caf50",
+                      paddingBottom: "10px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    Latest News
+                  </Typography>
+                  <Stack spacing={3}>
+                    {articles
+                      .slice(0, visibleArticles)
+                      .map((article, index) => (
+                        <>
+                          <div
+                            class="cardnews"
+                            onClick={() => handleClick(article.url)}
+                          >
+                            <div class="image">
+                              <img src={article.image} alt="" />
+                            </div>
+                            <div class="card__infonews">
+                              <span class="page">{article.source.name}</span>
+                              <a href="#" class="titlenews">
+                                {article.title}
+                              </a>
+                              <p class="content">{article.description}</p>
+                            </div>
+                          </div>
+                        </>
+                      ))}
+                  </Stack>
+                  {visibleArticles < articles.length && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      sx={{
+                        marginTop: 4,
+                        borderRadius: "20px",
+                        padding: "10px 20px",
+                        fontWeight: 600,
+                        textTransform: "none",
+                        fontSize: "16px",
+                        fontFamily: "Poppins",
+                      }}
+                      onClick={handleLoadMore}
+                    >
+                      Load More
+                    </Button>
+                  )}
+                </Grid>
+              </ThemeProvider>
+            ) : (
+              <div class="container404">
+                <div class="error-box">
+                  <h1 class="error-code">404</h1>
+                  <p class="error-message">
+                    Oops! The page you are looking for does not exist or not
+                    Found At This Moment
+                  </p>
+                  <a href="/" class="home-link">
+                    Go Back Home
+                  </a>
+                </div>
+              </div>
+            )}
+          </>
         );
       case 2:
         return (
@@ -1790,44 +1962,319 @@ const Dashboard = () => {
                 </div>
               </div>
             </Grid>
-            {/* <Grid>
-              <Paper style={{ padding: "20px", marginTop: "20px" }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                  Chat with GPT
-                </Typography>
-                <TextField
-                  label="Ask something..."
-                  variant="outlined"
-                  fullWidth
-                  multiline
-                  rows={4}
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  margin="normal"
-                />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : "Submit"}
-                </Button>
-                <Box mt={2}>
-                  <Typography variant="h6">Response:</Typography>
-                  <Typography
-                    variant="body1"
-                    style={{ whiteSpace: "pre-wrap" }}
-                  >
-                    {response}
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid> */}
           </Container>
         );
       case 3:
-        return <Typography variant="h4">Music Page</Typography>;
+        return (
+          <>
+            <Grid container spacing={3}>
+              {holyBooks.map((book) => (
+                <Grid item xs={12} sx={{ marginTop: "2%", marginBottom: "2%" }}>
+                  <div class="cardforarticle">
+                    <div class="card-imagearticle">
+                      {" "}
+                      <img src={book.image} alt="" />
+                    </div>
+                    <div class="category"> ROL </div>
+                    <div class="heading">{book.name}</div>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleBookClick(book.id)}
+                      style={{ marginTop: 10 }}
+                    >
+                      Read Now
+                    </Button>
+                  </div>
+                </Grid>
+              ))}
+            </Grid>
+
+            {selectedBook === "bhagavadgita" && (
+              <Dialog
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                fullScreen
+                PaperProps={{
+                  style: {
+                    borderRadius: "0px",
+                    overflow: "hidden",
+                  },
+                }}
+              >
+                <DialogTitle
+                  sx={{
+                    m: 0,
+                    p: 2,
+                    position: "relative",
+                    textAlign: "center",
+                    paddingBottom: "0",
+                  }}
+                >
+                  <Typography
+                    variant="h4"
+                    align="center"
+                    gutterBottom
+                    sx={{
+                      fontStyle: "Poppins",
+                      fontWeight: "600",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    Bhagavad Gita
+                  </Typography>
+                  <IconButton
+                    aria-label="close"
+                    onClick={() => setIsModalOpen(false)}
+                    sx={{
+                      position: "absolute",
+                      right: 8,
+                      top: 8,
+                      color: (theme) => theme.palette.grey[500],
+                    }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </DialogTitle>
+
+                <DialogContent>
+                  {gita.map((chapter) => (
+                    <Card
+                      elevation={4}
+                      style={{
+                        borderRadius: "12px",
+                        marginBottom: "20px",
+                        fontFamily: "Poppins",
+                      }}
+                      key={chapter.name}
+                    >
+                      <CardHeader
+                        title={chapter.name}
+                        subheader={chapter.name_translated}
+                        titleTypographyProps={{ variant: "h6" }}
+                        subheaderTypographyProps={{
+                          variant: "subtitle1",
+                          color: "textSecondary",
+                        }}
+                        style={{ backgroundColor: "#f5f5f5" }}
+                      />
+                      <Divider />
+                      <CardContent>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          paragraph
+                          sx={{
+                            fontWeight: "500",
+                            fontFamily: "Poppins",
+                          }}
+                        >
+                          {chapter.name_meaning}
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          paragraph
+                          sx={{
+                            fontWeight: "400",
+                            fontFamily: "Poppins",
+                          }}
+                        >
+                          {chapter.chapter_summary}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          paragraph
+                          sx={{
+                            fontWeight: "300",
+                            fontFamily: "Poppins",
+                          }}
+                        >
+                          {chapter.chapter_summary_hindi}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => setIsModalOpen(false)}
+                    style={{ marginTop: "20px" }}
+                  >
+                    Close
+                  </Button>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {/* Dialog for Bible */}
+            {selectedBook === "bible" && (
+              <Dialog
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                fullScreen
+                PaperProps={{
+                  style: {
+                    backgroundColor: "#f9f9f9",
+                    borderRadius: "8px",
+                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                  },
+                }}
+              >
+                <AppBar
+                  position="sticky"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    boxShadow: "none",
+                    borderBottom: "1px solid #e0e0e0",
+                  }}
+                >
+                  <Toolbar>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      style={{ flexGrow: 1 }}
+                      sx={{
+                        color: "black",
+                        fontFamily: "Poppins",
+                        fontWeight: "600",
+                        fontSize: "1.9rem",
+                      }}
+                    >
+                      Bible
+                    </Typography>
+                    <IconButton
+                      edge="end"
+                      color="inherit"
+                      onClick={() => setIsModalOpen(false)}
+                      aria-label="close"
+                      sx={{ color: "black" }}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </Toolbar>
+                </AppBar>
+                <DialogContent
+                  style={{
+                    padding: "20px",
+                    overflowY: "auto",
+                    maxHeight: "90vh",
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  {bibleContent.map((story, index) => (
+                    <Grid key={index} style={{ marginBottom: "20px" }}>
+                      <Card
+                        style={{
+                          borderRadius: "10px",
+                          backgroundColor: "#f0f0f0",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="h5"
+                            component="div"
+                            gutterBottom
+                            sx={{ fontFamily: "Poppins", fontWeight: "600" }}
+                          >
+                            {story.event}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{
+                              fontFamily: "Poppins",
+                              fontWeight: "400",
+                              fontSize: "1.1rem",
+                            }}
+                          >
+                            {story.description.substring(0, 100)}...
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {selectedBook === "romeo" && (
+              <Dialog
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                fullScreen
+                PaperProps={{
+                  style: {
+                    backgroundColor: "#f9f9f9",
+                    borderRadius: "8px",
+                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                  },
+                }}
+              >
+                <AppBar
+                  position="sticky"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    boxShadow: "none",
+                    borderBottom: "1px solid #e0e0e0",
+                  }}
+                >
+                  <Toolbar>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      style={{ flexGrow: 1 }}
+                      sx={{
+                        color: "black",
+                        fontFamily: "Poppins",
+                        fontWeight: "600",
+                        fontSize: "1.9rem",
+                      }}
+                    >
+                      Romeo and Juliet
+                    </Typography>
+                    <IconButton
+                      edge="end"
+                      color="inherit"
+                      onClick={() => setIsModalOpen(false)}
+                      aria-label="close"
+                      sx={{ color: "black" }}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </Toolbar>
+                </AppBar>
+                <DialogContent
+                  style={{
+                    padding: "20px",
+                    overflowY: "auto",
+                    maxHeight: "90vh",
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <div dangerouslySetInnerHTML={{ __html: romeoHtmlContent }} />
+                </DialogContent>
+              </Dialog>
+            )}
+          </>
+        );
+      case 4:
+        return (
+          <div class="container404">
+            <div class="error-box">
+              <h1 class="error-code">404</h1>
+              <p class="error-message">
+                Oops! The page you are looking for does not exist or not Found
+                At This Moment
+              </p>
+              <a href="/" class="home-link">
+                Go Back Home
+              </a>
+            </div>
+          </div>
+        );
       default:
         return <Typography variant="h4">Home Page</Typography>;
     }
@@ -1993,6 +2440,7 @@ const Dashboard = () => {
             <BottomNavigationAction label="Home" icon={<HomeIcon />} />
             <BottomNavigationAction label="News" icon={<ArticleIcon />} />
             <BottomNavigationAction label="Study" icon={<SchoolIcon />} />
+            <BottomNavigationAction label="Books" icon={<MenuBookIcon />} />
             <BottomNavigationAction label="Music" icon={<MusicNoteIcon />} />
           </BottomNavigation>
         </Container>
